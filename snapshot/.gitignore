@@ -3,3 +3,6 @@ lib
 build
 build.*
 
+output
+*.log
+*.csv

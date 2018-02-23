@@ -38,6 +38,7 @@
 #include "utility/limits.hpp"
 #include "utility/path.hpp"
 #include "utility/openmp.hpp"
+#include "utility/parse.hpp"
 
 #include "math/geometry_core.hpp"
 
@@ -56,6 +57,7 @@ class Snapshot : public service::Cmdline {
 public:
     Snapshot()
         : service::Cmdline("vts-snapshot", BUILD_TARGET_VERSION)
+        , frameSize_(1920, 1080)
     {}
 
 private:
@@ -77,6 +79,7 @@ private:
     std::string imageFileExtentsion_ = ".jpg";
     fs::path output_;
     int jpegQuality_ = 85;
+    math::Size2 frameSize_;
 };
 
 void Snapshot::configuration(po::options_description &cmdline
@@ -102,6 +105,10 @@ void Snapshot::configuration(po::options_description &cmdline
          ->default_value(jpegQuality_)->required()
          , "JPEG compression quality (0-100). Applicable only "
          "when imageFileExtentsion is \".jpg\".")
+
+        ("frameSize", po::value(&frameSize_)
+         ->default_value(frameSize_)->required()
+         , "Frame size (WxH), in pixels.")
 
         ("output", po::value(&output_)->required()
          , "Output directory.")
@@ -134,6 +141,51 @@ usage
     return false;
 }
 
+struct Frame {
+    std::string id;
+    std::string position;
+
+    typedef std::vector<Frame> list;
+
+    Frame(const std::string &id, const std::string &position)
+        : id(id), position(position)
+    {}
+};
+
+Frame::list loadFrames(std::istream &is
+                       , const boost::filesystem::path &filename)
+{
+    (void) filename;
+
+    Frame::list frames;
+
+    const auto processor([&](const std::vector<std::string> &values)
+    {
+        frames.emplace_back(values[0], values[1]);
+    });
+
+    utility::separated_values::parse(is, ";", processor, {});
+
+    return frames;
+}
+
+Frame::list loadFrames(const boost::filesystem::path &filename)
+{
+    LOG(info1) << "Loading frames from " << filename  << ".";
+    std::ifstream f;
+    f.exceptions(std::ios::badbit);
+    try {
+        f.open(filename.string(), std::ios_base::in);
+    } catch (const std::exception &e) {
+        LOGTHROW(err1, std::runtime_error)
+            << "Unable to load frames from " << filename << ".";
+    }
+
+    auto frames(loadFrames(f, filename));
+    f.close();
+    return frames;
+}
+
 void save(const fs::path &filename, const cv::Mat &image
           , int jpegQuality)
 {
@@ -145,6 +197,37 @@ void save(const fs::path &filename, const cv::Mat &image
 
 int Snapshot::run()
 {
+    const auto frames(loadFrames(input_));
+
+    vo::AsyncSnapper snapper(snapperConfig_);
+
+    int size(frames.size());
+    UTILITY_OMP(parallel for schedule(static,1))
+        for (int i = 0; i < size; ++i) {
+            const auto &frame(frames[i]);
+
+            vo::View snapperView;
+            {
+                vo::VtsSerializedPosition position;
+                position.position = frame.position;
+                snapperView.position = position;
+                snapperView.viewport.width = frameSize_.width;
+                snapperView.viewport.height = frameSize_.height;
+            }
+
+            LOG(info3)
+                << "Shooting frame <" << frame.id << "> "
+                << frameSize_ << " at position " << frame.position << ".";
+            const auto snap(snapper(snapperView));
+
+            const auto imageFile(utility::addExtension
+                                 (output_ / frame.id, imageFileExtentsion_));
+            LOG(info3)
+                << "Saving frame <" << frame.id
+                << " into file " << imageFile << ".";
+            save(imageFile, snap.image, jpegQuality_);
+        }
+
     LOG(info4) << "All done.";
     return EXIT_SUCCESS;
 }
