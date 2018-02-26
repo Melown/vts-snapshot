@@ -15,7 +15,7 @@ list(APPEND CMAKE_PREFIX_PATH $ENV{HOME}/install)
 enable_OpenMP()
 
 # some boost
-find_package(Boost 1.60 REQUIRED
+find_package(Boost 1.58 REQUIRED
   COMPONENTS thread program_options filesystem system date_time
              serialization regex chrono iostreams)
 link_directories(${Boost_LIBRARY_DIRS})
@@ -48,7 +48,7 @@ find_package(VtsRenderer REQUIRED)
 include_directories(SYSTEM ${VtsRenderer_INCLUDE_DIR})
 
 # finds OpenGL & co.
-enable_OpenGL(EGL)
+enable_OpenGL(GL EGL)
 
 # dependencies
 add_subdirectory(src/dbglog)
