@@ -1,5 +1,5 @@
 # bootstrap build system
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.10)
 project(vts-snapshot)
 
 # by default, this is OSS build (can be overrided by customer machinery)
@@ -22,7 +22,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 # opencv
-find_package(OpenCV 2.4 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # image formats
 find_package(JPEG REQUIRED)
@@ -48,7 +48,7 @@ find_package(VtsRenderer REQUIRED)
 include_directories(SYSTEM ${VtsRenderer_INCLUDE_DIR})
 
 # finds OpenGL & co.
-enable_OpenGL(GL EGL)
+enable_OpenGL(OpenGL EGL)
 
 # dependencies
 add_subdirectory(src/dbglog)

@@ -224,7 +224,7 @@ int Snapshot::run()
                                  (output_ / frame.id, imageFileExtentsion_));
             LOG(info3)
                 << "Saving frame <" << frame.id
-                << " into file " << imageFile << ".";
+                << "> into file " << imageFile << ".";
             save(imageFile, snap.image, jpegQuality_);
         }
 
