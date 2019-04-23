@@ -31,6 +31,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <vts-browser/log.hpp>
+#include <vts-browser/boostProgramOptions.hpp>
 
 #include "service/cmdline.hpp"
 #include "utility/buildsys.hpp"
@@ -94,7 +95,9 @@ void Snapshot::configuration(po::options_description &cmdline
          , "URL of VTS auth server configuration.")
 
         ("input", po::value(&input_)->required()
-         , "Path to intput position file.")
+         , "Path to input positions file. "
+           "One image will be generated for each line in the File. "
+           "Each line consists of name, semicolon separator and VTS position.")
 
         ("imageFileExtentsion", po::value(&imageFileExtentsion_)
          ->default_value(imageFileExtentsion_)->required()
@@ -108,11 +111,29 @@ void Snapshot::configuration(po::options_description &cmdline
 
         ("frameSize", po::value(&frameSize_)
          ->default_value(frameSize_)->required()
-         , "Frame size (WxH), in pixels.")
+         , "Output image resolution (WxH), in pixels.")
 
-        ("output", po::value(&output_)->required()
+        ("output", po::value(&output_)->default_value("output")->required()
          , "Output directory.")
+
+        ("render.atmosphere"
+         , po::value(&snapperConfig_.renderAtmosphere)
+           ->default_value(snapperConfig_.renderAtmosphere)
+           ->implicit_value(!snapperConfig_.renderAtmosphere)
+           ->required()
+         , "Render atmosphere.")
+
+        ("render.antialiasing"
+         , po::value(&snapperConfig_.antialiasingSamples)
+           ->default_value(snapperConfig_.antialiasingSamples)
+           ->implicit_value(16)
+           ->required()
+         , "Number of samples for antialiasing. Zero to disable.")
         ;
+
+    vts::optionsConfigMapCreate(config, &snapperConfig_.confMapCreate);
+    vts::optionsConfigMapRuntime(config, &snapperConfig_.confMapRuntime);
+    vts::optionsConfigCamera(config, &snapperConfig_.confCamera);
 
     pd.add("mapConfigUrl", 1);
 
