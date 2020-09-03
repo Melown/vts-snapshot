@@ -38,6 +38,8 @@ find_package(GeographicLib REQUIRED)
 include_directories(${GEOGRAPHICLIB_INCLUDE_DIR})
 find_package(JsonCPP REQUIRED)
 include_directories(${JSONCPP_INCLUDE_DIRS})
+find_package(Eigen3 REQUIRED)
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
 # vts browser library
 find_package(VtsBrowser REQUIRED)
