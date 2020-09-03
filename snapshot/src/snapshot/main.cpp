@@ -222,7 +222,7 @@ int Snapshot::run()
 
     vo::AsyncSnapper snapper(snapperConfig_);
 
-    int size(frames.size());
+    const int size(frames.size());
     UTILITY_OMP(parallel for schedule(static,1))
         for (int i = 0; i < size; ++i) {
             const auto &frame(frames[i]);
