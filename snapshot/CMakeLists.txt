@@ -2,65 +2,41 @@
 cmake_minimum_required(VERSION 3.10)
 project(vts-snapshot)
 
-# by default, this is OSS build (can be overrided by customer machinery)
+# by default, this is OSS build (can be overridden by customer machinery)
 set(BUILDSYS_DEFAULT_CUSTOMER_NAME oss)
-# enforce C++17
 set(BUILDSYS_CPP_STANDARD 17)
 include(buildsys/cmake/buildsys.cmake)
 
-# allow VTS libs to reside locally
-list(APPEND CMAKE_PREFIX_PATH $ENV{HOME}/install)
+# vts browser
+add_subdirectory(src/browser)
+add_library(VtsBrowser ALIAS vts-browser)
+add_library(VtsRenderer ALIAS vts-renderer)
+include_directories(src/browser/src/vts-libbrowser/externals)
+include_directories(src/browser/src/vts-libbrowser/include)
+include_directories(src/browser/src/vts-librenderer/include)
 
-# parallelism wouldn't hurt
-enable_OpenMP()
-
-# some boost
-find_package(Boost 1.58 REQUIRED
-  COMPONENTS thread program_options filesystem system date_time
-             serialization regex chrono iostreams)
-link_directories(${Boost_LIBRARY_DIRS})
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-
-# opencv
+# third-party dependencies
 find_package(OpenCV REQUIRED)
-
-# image formats
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(EXIF REQUIRED)
-
-find_package(GDAL REQUIRED)
-include_directories(SYSTEM ${GDAL_INCLUDE_DIR})
-find_package(Proj REQUIRED)
-include_directories(${PROJ_INCLUDE_DIR})
-find_package(GeographicLib REQUIRED)
-include_directories(${GEOGRAPHICLIB_INCLUDE_DIR})
-find_package(JsonCPP REQUIRED)
-include_directories(${JSONCPP_INCLUDE_DIRS})
+find_package(Boost 1.46 REQUIRED
+    COMPONENTS thread program_options filesystem system
+    date_time serialization regex chrono iostreams)
+link_directories(${Boost_LIBRARY_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 find_package(Eigen3 REQUIRED)
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
-# vts browser library
-find_package(VtsBrowser REQUIRED)
-include_directories(SYSTEM ${VtsBrowser_INCLUDE_DIR})
-
-# vts renderer library
-find_package(VtsRenderer REQUIRED)
-include_directories(SYSTEM ${VtsRenderer_INCLUDE_DIR})
+# parallelism wouldn't hurt
+enable_OpenMP()
 
 # finds OpenGL & co.
 enable_OpenGL(OpenGL EGL)
 
 # dependencies
-add_subdirectory(src/dbglog)
-add_subdirectory(src/utility)
 add_subdirectory(src/service)
-add_subdirectory(src/math)
-add_subdirectory(src/imgproc)
-add_subdirectory(src/geometry)
-add_subdirectory(src/jsoncpp)
-add_subdirectory(src/geo)
 add_subdirectory(src/glsupport)
 add_subdirectory(src/vtsoffscreen)
 
