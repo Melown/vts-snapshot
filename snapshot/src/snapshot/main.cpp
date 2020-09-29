@@ -93,10 +93,13 @@ void Snapshot::configuration(po::options_description &cmdline
         ("authUrl", po::value(&snapperConfig_.authUrl)
          ->default_value(snapperConfig_.authUrl)->required()
          , "URL of VTS auth server configuration.")
+        ("mapView", po::value(&snapperConfig_.mapView)
+         ->default_value(snapperConfig_.mapView)->required()
+         , "Map view configuration (url encoded).")
 
         ("input", po::value(&input_)->required()
          , "Path to input positions file. "
-           "One image will be generated for each line in the File. "
+           "One image will be generated for each line in the file. "
            "Each line consists of name, semicolon separator and VTS position.")
 
         ("imageFileExtentsion", po::value(&imageFileExtentsion_)
