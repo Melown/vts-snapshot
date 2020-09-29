@@ -8,7 +8,7 @@ set(BUILDSYS_CPP_STANDARD 17)
 include(buildsys/cmake/buildsys.cmake)
 
 # vts browser
-add_subdirectory(src/browser)
+add_subdirectory(src/browser EXCLUDE_FROM_ALL)
 add_library(VtsBrowser ALIAS vts-browser)
 add_library(VtsRenderer ALIAS vts-renderer)
 include_directories(src/browser/src/vts-libbrowser/externals)
