@@ -195,18 +195,23 @@ Frame::list loadFrames(std::istream &is
 
 Frame::list loadFrames(const boost::filesystem::path &filename)
 {
-    LOG(info1) << "Loading frames from " << filename  << ".";
-    std::ifstream f;
-    f.exceptions(std::ios::badbit);
+    LOG(info2) << "Loading frames from " << filename  << ".";
+    Frame::list frames;
     try {
+        std::ifstream f;
+        f.exceptions(std::ios::badbit);
         f.open(filename.string(), std::ios_base::in);
+        frames = loadFrames(f, filename);
+        f.close();
     } catch (const std::exception &e) {
-        LOGTHROW(err1, std::runtime_error)
-            << "Unable to load frames from " << filename << ".";
+        // handled later
     }
-
-    auto frames(loadFrames(f, filename));
-    f.close();
+    LOG(info3) << "Loaded " << frames.size() << " frames from " << filename  << ".";
+    if (frames.empty())
+    {
+        LOGTHROW(err3, std::runtime_error)
+            << "Loaded no frames.";
+    }
     return frames;
 }
 
