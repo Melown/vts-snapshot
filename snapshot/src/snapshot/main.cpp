@@ -126,6 +126,20 @@ void Snapshot::configuration(po::options_description &cmdline
            ->required()
          , "Render atmosphere.")
 
+        ("render.flatShading"
+         , po::value(&snapperConfig_.renderFlatShading)
+           ->default_value(snapperConfig_.renderFlatShading)
+           ->implicit_value(!snapperConfig_.renderFlatShading)
+           ->required()
+         , "Render flat shading.")
+
+        ("render.wireframe"
+         , po::value(&snapperConfig_.renderWireframe)
+           ->default_value(snapperConfig_.renderWireframe)
+           ->implicit_value(!snapperConfig_.renderWireframe)
+           ->required()
+         , "Render wireframe.")
+
         ("render.antialiasing"
          , po::value(&snapperConfig_.antialiasingSamples)
            ->default_value(snapperConfig_.antialiasingSamples)
