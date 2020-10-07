@@ -48,6 +48,7 @@
 #include "geo/srsdef.hpp"
 #include "geo/coordinates.hpp"
 
+#include "glsupport/egl.hpp"
 #include "vtsoffscreen/snapper.hpp"
 
 namespace po = boost::program_options;
@@ -81,6 +82,7 @@ private:
     fs::path output_;
     int jpegQuality_ = 85;
     math::Size2 frameSize_;
+    //std::size_t threadsCount_ = 2; // std::thread::hardware_concurrency();
 };
 
 void Snapshot::configuration(po::options_description &cmdline
@@ -111,6 +113,12 @@ void Snapshot::configuration(po::options_description &cmdline
          ->default_value(jpegQuality_)->required()
          , "JPEG compression quality (0-100). Applicable only "
          "when imageFileExtentsion is \".jpg\".")
+
+        /*
+        ("threadsCount", po::value(&threadsCount_)
+         ->default_value(threadsCount_)->required()
+         , "Number of threads to use for rendering.")
+        */
 
         ("frameSize", po::value(&frameSize_)
          ->default_value(frameSize_)->required()
@@ -241,12 +249,56 @@ void save(const fs::path &filename, const cv::Mat &image
 int Snapshot::run()
 {
     const auto frames(loadFrames(input_));
+    const std::size_t size(frames.size());
 
-    vo::AsyncSnapper snapper(snapperConfig_);
+    /*
+    std::atomic<std::size_t> index{0};
+    std::vector<std::thread> thrs;
+    thrs.resize(std::min(threadsCount_, size));
+    for (std::thread &thr : thrs)
+    {
+        thr = std::thread([&](){
+            vo::Snapper snapper(snapperConfig_);
 
-    const int size(frames.size());
+            while (true)
+            {
+                const std::size_t taskIndex = index++;
+                if (taskIndex >= size)
+                    break;
+
+                const auto &frame(frames[taskIndex]);
+                vo::View snapperView;
+                {
+                    vo::VtsSerializedPosition position;
+                    position.position = frame.position;
+                    snapperView.position = position;
+                    snapperView.viewport.width = frameSize_.width;
+                    snapperView.viewport.height = frameSize_.height;
+                }
+
+
+                LOG(info3)
+                    << "Shooting frame <" << frame.id << "> "
+                    << frameSize_ << " at position " << frame.position << ".";
+                const auto snapshot = snapper.snap(snapperView);
+
+                const auto imageFile(utility::addExtension
+                                 (output_ / frame.id, imageFileExtentsion_));
+                LOG(info2)
+                    << "Saving frame <" << frame.id
+                    << "> into file " << imageFile << ".";
+                save(imageFile, snapshot.image, jpegQuality_);
+            }
+        });
+    }
+    for (std::thread &thr : thrs)
+        thr.join();
+    */
+
+
+    vo::AsyncSnapper snapper(snapperConfig_, {});
     UTILITY_OMP(parallel for schedule(static,1))
-        for (int i = 0; i < size; ++i) {
+        for (std::size_t i = 0; i < size; ++i) {
             const auto &frame(frames[i]);
 
             vo::View snapperView;
@@ -265,7 +317,7 @@ int Snapshot::run()
 
             const auto imageFile(utility::addExtension
                                  (output_ / frame.id, imageFileExtentsion_));
-            LOG(info3)
+            LOG(info2)
                 << "Saving frame <" << frame.id
                 << "> into file " << imageFile << ".";
             save(imageFile, snap.image, jpegQuality_);
